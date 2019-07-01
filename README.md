@@ -104,5 +104,5 @@ jenkins-slave-jrwrh                             2/2     Running   0          7s
 ```
 Additionally at the ***Build executor status*** widget on the main dashboard you will also be able to see the jenkins slaves with the same name.
 Example:
-![Jenkins slaves](https://imgur.com/a/x7cUsV2)
+![Jenkins slaves](https://i.imgur.com/poILVKi.png)
 
