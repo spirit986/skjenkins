@@ -1,11 +1,11 @@
 # skjenkins
-### Scalable Jenkins with Kubernetes cluster
+### Scalable Jenkins with Kubernetes cluster example
 
-This setup can serve as a PoC for creating a scalable jenkins deployment on a Kubernettes cluster.
+This setup can serve as a PoC for creating a scalable Jenkins deployment on a Kubernetes cluster.
 
 # Prerequisites
-1. A working 3 node Kubernetes cluster. (This will probably work with minikube as well, however I haven't tested this with minikube since I have my own kubernetes cluster)
-2. Automated storage provisoner like [this one](https://github.com/spirit986/external-storage/tree/master/nfs). Else you will need to modify the appropriate parts from `jenkins-deployment.yaml` and setup your own storage provisioner or just use an `emptyDir` volume.
+1. A working 3 node Kubernetes cluster. (This will probably work with minikube as well, however I haven't tested this with Minikube since I have my own Kubernetes cluster)
+2. Automated storage provisioner like [this one](https://github.com/spirit986/external-storage/tree/master/nfs). Else you will need to modify the appropriate parts from `jenkins-deployment.yaml` and setup your own storage provisioner or just use an `emptyDir` volume.
 
 # Usage example
 A short tutorial on how to use the scripts.
@@ -65,3 +65,44 @@ jenkins                        NodePort       10.111.141.48   <none>         808
 ```
 
 Since my kube master IP is 172.16.0.200 I should be able to open Jenkins on: http://172.16.0.200:30001.
+
+# Enabling the Jenkins slaves
+In the main dockerfile we installed the Kubernetes plugin. To enable and test the slaves you can now go into ***Manage Jenkins -> Configure System***, and near the bottom there is the ***Cloud*** section with the Kubernetes option.
+
+Under the Kubernetes section you will need to update:
+* Name - Anything you want to distinguish your Kubernetes cluster, since more than one cluster can be added.
+* Kubernetes URL - In my example this URL is: https://172.16.0.200:6443 as shown from the output of the command at the beggining.
+* Jenkins URL - To get the jenkins URL you can simply put the HTTP://IP:PORT URL of the pod running jenkins. To get the IP of the pod `$ kubectl get pods -o wide | grep jenkins`. In my case the URL is: http://10.244.2.23:8080.
+
+As a next step you will also need to update the ***Kubernetes Pod Template***. The relevant fields are marked bellow:
+* Name - I used jenkins-slave here. All of the jenkins slave containers will bear the jenkins-slave name to them. This way you will be able to distinguish them easly.
+* Labels - jenkins-slave.
+* Usage - Use this node as much as possible.
+
+***Container Template***
+* Name - jenkins-slave.
+* Docker Image - jenkins/jnlp-slave - This is the official jenkins slave docker image from DockerHub.
+
+Apply and save the configuration.
+
+### Optional step
+Under ***Manage Jenkins -> Manage Nodes*** section, edit the `master` node and configure the following options:
+* # of executors	- Set this to 1 or 0. This will inturn result jenkins to schedule the builds on the slave nodes only.
+
+# Test the setup
+If everything is done correctly you will be able to test your setup the following way.
+1. Create two or three build jobs. I named mine *first* and *second*.
+2. At the configuration options for each job, under the Build tab, add ***Execute shell*** build step with `sleep 60` or `sleep 90` more seconds. This way we can simulate long builds which will trigger the creation of the slave pods.
+3. Schedule the Jenkins builds. 
+
+If everything is done correctly up until this step, you should be able to see `jenkins-slave-HASHID`, jenkins pods being created in your cluster. 
+```bash
+$ kubectl get pods | grep jenkins
+NAME                                            READY   STATUS    RESTARTS   AGE
+jenkins-7576859b79-tnq77                        1/1     Running   0          4h39m
+jenkins-slave-jrwrh                             2/2     Running   0          7s
+```
+Additionally at the ***Build executor status*** widget on the main dashboard you will also be able to see the jenkins slaves with the same name.
+Example:
+![Jenkins slaves](https://imgur.com/a/x7cUsV2)
+
