@@ -87,7 +87,7 @@ Apply and save the configuration.
 
 ### Optional step
 Under ***Manage Jenkins -> Manage Nodes*** section, edit the `master` node and configure the following options:
-* # of executors	- Set this to 1 or 0. This will inturn result jenkins to schedule the builds on the slave nodes only.
+* &#35; of executors	- Set this to 1 or 0. This will inturn result jenkins to schedule the builds on the slave nodes only.
 
 # Test the setup
 If everything is done correctly you will be able to test your setup the following way.
